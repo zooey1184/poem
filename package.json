@@ -16,6 +16,7 @@
     "babel-plugin-transform-es2015-modules-commonjs": "^6.26.2",
     "babel-preset-env": "^1.7.0",
     "babel-register": "^6.26.0",
+    "mysql2": "^1.6.5",
     "nodemon": "^1.18.8",
     "puppeteer": "^1.6.1"
   },
@@ -24,7 +25,12 @@
     "koa": "^2.7.0",
     "koa-bodyparser": "^4.2.1",
     "koa-router": "^7.4.0",
+    "mariadb": "^2.0.3",
     "mysql": "^2.17.1",
-    "sequelize": "^5.8.0"
+    "pg": "^7.10.0",
+    "pg-hstore": "^2.3.2",
+    "sequelize": "^5.8.0",
+    "sqlite3": "^4.0.6",
+    "tedious": "^6.1.1"
   }
 }
