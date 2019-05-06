@@ -44,6 +44,32 @@ const Author = db.define('authories', {
   // options
 });
 
+const Poem = db.define('poems', {
+  // attributes
+  link: {
+    type: Sequelize.STRING,
+    allowNull: false
+  },
+  dynasty: {
+    type: Sequelize.STRING
+  },
+  author: {
+    type: Sequelize.STRING
+  },
+  title: {
+    type: Sequelize.STRING,
+  },
+  content: {
+    type: Sequelize.STRING,
+    allowNull: false
+  },
+  tags: {
+    type: Sequelize.JSON,
+  }
+}, {
+  // options
+});
+
 db.authenticate()
 .then(() => {
   console.log('数据库连接成功.');
@@ -54,5 +80,6 @@ db.authenticate()
 
 export {
   Dynasty,
-  Author
+  Author,
+  Poem
 };

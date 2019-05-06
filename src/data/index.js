@@ -7,10 +7,11 @@ const bodyparser = require('koa-bodyparser')
 import { getDynasty, getDynastyPages } from './dynasty.js'
 import { getAuthor } from './author'
 import {wait, getUrlData} from '../common/tool'
-import {Dynasty, Author} from '../sql'
+import {Dynasty, Author, Poem} from '../sql'
+import { searchFn } from './search'
+import { getPoem } from './poem.js';
 
 const url = 'https://so.gushiwen.org/authors/Default.aspx'
-const url2 = 'https://so.gushiwen.org/authors/Default.aspx?p=1&c=%E5%85%88%E7%A7%A6'
 const uu = 'https://so.gushiwen.org/authors/Default.aspx'
 
 app.use(bodyparser())
@@ -50,33 +51,26 @@ if (getDynasties) {
   })
 }
 
-
-
-// getAuthor(url2, (r) => {
-//   console.log(`当前是${getUrlData(url2).p}页，朝代${getUrlData(url2).c}`);
-//   router.get('/author', async(ctx, next)=> {
-//     ctx.body = r
-//     await next()
-//   })
-// })
-const hasgetAuthor = true
+/**
+ * 获取作者
+ * hasgetAuthor 切换关闭状态方便调试
+ */
+const hasgetAuthor = false
 if (hasgetAuthor) {
   Dynasty.findAll().then(async r => {
     let ret = JSON.parse(JSON.stringify(r, null, 4)) // 获取到了朝代相关信息
     for(let i=0; i<ret.length; i++) {
       let item = ret[i]
       if (item.dynasty == '先秦' || item.dynasty == '两汉') {
-        let total = item.total
-        let arr = []
+        let total = item.total > 10 ? 10 : item.total // 古诗文网站仅支持前10页的数据   单独数据可以搜索框搜索    当然可以通过App抓包来实现
         let c = getUrlData(item.link).c
         for (let i = 0; i < total; i++) {
           let link = `${uu}?p=${i+1}&c=${c}`
           await getAuthor(link, (r) => {
             console.log(`当前是${getUrlData(link).p}页，朝代${c}`);
-            // arr = [...arr, ...r]
             Author.findAll({
               where: {
-                name: r[r.length-1].name
+                name: r[0].name
               }
             }).then(res=> {
               if(res && res.length<1) {
@@ -86,7 +80,7 @@ if (hasgetAuthor) {
                   Author.bulkCreate(r)
                 })
               }
-            }).catch(e=> {
+            }).catch(()=> {
               Author.sync({
                 force: false
               }).then(() => {
@@ -95,25 +89,82 @@ if (hasgetAuthor) {
             })
           })
         }
-        // await wait().then(() => {
-        //   Author.findAll({
-        //     where: {
-        //       name: arr[arr.length - 1].name
-        //     }
-        //   }).then(() => {
-        //     Author.sync({
-        //       force: false
-        //     }).then(() => {
-        //       Author.bulkCreate(arr)
-        //     })
-        //   })
-        // })
       }
     }
     
   })
 }
 
+searchFn('白', (r) => {
+  console.log(r)
+  const poem = r.poem
+  const author = r.author
+
+  async function poemFn() {
+    for (let i in poem.values()) {
+      await Poem.findAll({
+        where: {
+          title: i.title
+        }
+      }).then(res => {
+        if (res && res.length < 1) {
+          Poem.sync({
+            force: false
+          }).then(() => {
+            Poem.create(i)
+          })
+        }
+      }).catch(e => {
+        console.log(e);
+      })
+    }
+  }
+
+  function authorFn() {
+    if(author.length>0) {
+      Author.findAll({
+        where: {
+          name: author[0].name
+        }
+      }).then(res => {
+        if (res && res.length < 1) {
+          Author.sync({
+            force: false
+          }).then(() => {
+            Author.create(author[0])
+          })
+        }
+      }).catch(e => {
+        console.log(e);
+      })
+    }
+  }
+})
+
+function secPageMore(type = 'author', word, p) { // type=title
+  if (p > 1) {
+    let url = `https://so.gushiwen.org/search.aspx?type=${type}&p=${p}&value=${word}`
+    getPoem(url, async(r)=> {
+      for (let i in r.values()) {
+        await Poem.findAll({
+          where: {
+            title: i.title
+          }
+        }).then(res => {
+          if (res && res.length < 1) {
+            Poem.sync({
+              force: false
+            }).then(() => {
+              Poem.create(i)
+            })
+          }
+        }).catch(e => {
+          console.log(e);
+        })
+      }
+    })
+  }
+}
 
 app.use(router.routes())
 app.use(router.allowedMethods())
