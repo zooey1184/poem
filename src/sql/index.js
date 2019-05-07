@@ -22,7 +22,6 @@ const Author = db.define('authories', {
   // attributes
   link: {
     type: Sequelize.STRING,
-    allowNull: false
   },
   dynasty: {
     type: Sequelize.STRING
@@ -35,7 +34,6 @@ const Author = db.define('authories', {
   },
   name: {
     type: Sequelize.STRING,
-    allowNull: false
   },
   desc: {
     type: Sequelize.TEXT,
@@ -48,7 +46,6 @@ const Poem = db.define('poems', {
   // attributes
   link: {
     type: Sequelize.STRING,
-    allowNull: false
   },
   dynasty: {
     type: Sequelize.STRING
@@ -60,11 +57,24 @@ const Poem = db.define('poems', {
     type: Sequelize.STRING,
   },
   content: {
-    type: Sequelize.STRING,
+    type: Sequelize.TEXT,
     allowNull: false
   },
   tags: {
     type: Sequelize.JSON,
+  }
+}, {
+  // options
+});
+
+
+const PoemType = db.define('types', {
+  // attributes
+  link: {
+    type: Sequelize.STRING,
+  },
+  type: {
+    type: Sequelize.STRING,
   }
 }, {
   // options
@@ -81,5 +91,6 @@ db.authenticate()
 export {
   Dynasty,
   Author,
-  Poem
+  Poem,
+  PoemType
 };

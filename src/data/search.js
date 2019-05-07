@@ -1,7 +1,7 @@
 const puppeteer = require('puppeteer');
-import {
-  wait
-} from '../common/tool'
+import {Poem, Author} from '../sql'
+import { getPoem } from './poem.js';
+import { wait } from '../common/tool'
 const url = 'https://www.gushiwen.org/'
 const searchurl = 'https://so.gushiwen.org/search.aspx'
 
@@ -114,7 +114,87 @@ let searchFn = async (word, callback) => {
   browser.close();
 }
 
+function secPageMore(word, type = 'author', p) { // type=title
+  if (p > 1) {
+    let url = `https://so.gushiwen.org/search.aspx?type=${type}&p=${p}&value=${word}`
+    getPoem(url, async (r) => {
+      for (let i of r.poem) {
+        await Poem.findAll({
+          where: {
+            title: i.title
+          }
+        }).then(res => {
+          if (res && res.length < 1) {
+            Poem.sync({
+              force: false
+            }).then(() => {
+              Poem.create(i)
+            })
+          }
+        }).catch(e => {
+          console.log(e);
+        })
+      }
+    })
+  }
+}
+function finalSearchFn(word, type, p) {
+  if(type || p) {
+    secPageMore(word, type, p)
+  } else {
+    searchFn(word, (r) => {
+      console.log(r)
+      const poem = r.poem
+      const author = r.author
+
+      async function poemFn() {
+        for (let i of poem) {
+          await Poem.findAll({
+            where: {
+              title: i.title
+            }
+          }).then(res => {
+            if (res && res.length < 1) {
+              Poem.sync({
+                force: false
+              }).then(() => {
+                Poem.create(i)
+              })
+            }
+          }).catch(e => {
+            console.log(e)
+          })
+        }
+      }
+      poemFn()
+
+      function authorFn() {
+        if (author.length > 0) {
+          Author.findAll({
+            where: {
+              name: author[0].name
+            }
+          }).then(res => {
+            if (res && res.length < 1) {
+              Author.sync({
+                force: false
+              }).then(() => {
+                Author.create(author[0])
+              })
+            }
+          }).catch(e => {
+            console.log(e);
+          })
+        }
+      }
+      authorFn()
+    })
+  }
+}
+
+
 export {
   searchAuthor,
-  searchFn
+  searchFn,
+  finalSearchFn
 }

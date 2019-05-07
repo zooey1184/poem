@@ -1,5 +1,6 @@
 const puppeteer = require('puppeteer');
-
+import { wait } from '../common/tool'
+import { Dynasty } from '../sql'
 /**
  * 获取各个朝代
  * return [{href, type}]
@@ -56,7 +57,30 @@ let getDynastyPages = async (link, callback) => {
   browser.close();
 }
 
+function getAllDynasty() {
+  getDynasty(url, async (list) => {
+    for (let i in list) {
+      await getDynastyPages(list[i].href, r => {
+        ll.push({
+          link: list[i].href,
+          dynasty: list[i].type,
+          total: Number.parseInt(r)
+        })
+      })
+    }
+    // 批量导入
+    await wait().then(() => {
+      Dynasty.sync({
+        force: true
+      }).then(() => {
+        Dynasty.bulkCreate(ll)
+      })
+    })
+  })
+}
+
 export {
   getDynasty,
-  getDynastyPages
+  getDynastyPages,
+  getAllDynasty
 }
