@@ -13,7 +13,7 @@ const app = new Koa();
   // });
   try {
     // 转到《海贼王》最新一话页面
-    await page.goto('http://www.29aitt.com/j_youma/index-2.html');
+    await page.goto(url);
 
     // 获取图片数目和高度
     const imagesLen = await page.$$eval('.movie_list img', imgs => imgs.length);

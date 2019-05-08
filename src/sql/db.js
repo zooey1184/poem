@@ -1,5 +1,6 @@
-const conf = require('./config')
-const c = conf.database.test
+// const conf = require('./config')
+// const c = conf.database.test
+import c from '../db.config.js'
 const Sequelize = require('sequelize');
 
 module.exports = new Sequelize(c.DATABASE, c.USERNAME, c.PASSWORD, {

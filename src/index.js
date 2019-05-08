@@ -7,4 +7,4 @@ require('babel-register')
     plugins: ['babel-plugin-transform-es2015-modules-commonjs'],
   })
 
-module.exports = require('./data/index.js')
+module.exports = require('./views/index.js')

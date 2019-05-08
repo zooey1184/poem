@@ -49,9 +49,10 @@ let searchFn = async (word, callback) => {
   const browser = await puppeteer.launch();
   const page = await browser.newPage();
   const url = `${searchurl}?value=${word}`
+  console.log(url);
   await page.goto(url);
+
   // 获取总数
-  
   const p = await page.$$eval('.main3 #FromPage .pagesright', (li) => {
     let li_list = [];
     li.forEach(r => {
@@ -61,6 +62,7 @@ let searchFn = async (word, callback) => {
     });
     return li_list
   });
+
   // 获取author
   const a = await page.$$eval('.main3 .left .sonspic', (li) => {
     let li_list = [];
@@ -75,6 +77,7 @@ let searchFn = async (word, callback) => {
     });
     return li_list
   });
+
   // 获取poem
   const poem = await page.$$eval('.main3 .left .sons', (li) => {
     let content_list = [];
@@ -114,26 +117,30 @@ let searchFn = async (word, callback) => {
   browser.close();
 }
 
-function secPageMore(word, type = 'author', p) { // type=title
+async function checkTitle(item) {
+  await Poem.findAll({
+    where: {
+      title: item.title
+    }
+  }).then(res => {
+    if (res && res.length < 1) {
+      Poem.sync({
+        force: false
+      }).then(() => {
+        Poem.create(item)
+      })
+    }
+  }).catch(e => {
+    console.log(e)
+  })
+}
+
+function secPageMore(word, type, p) { // type=title
   if (p > 1) {
     let url = `https://so.gushiwen.org/search.aspx?type=${type}&p=${p}&value=${word}`
     getPoem(url, async (r) => {
       for (let i of r.poem) {
-        await Poem.findAll({
-          where: {
-            title: i.title
-          }
-        }).then(res => {
-          if (res && res.length < 1) {
-            Poem.sync({
-              force: false
-            }).then(() => {
-              Poem.create(i)
-            })
-          }
-        }).catch(e => {
-          console.log(e);
-        })
+        await checkTitle(i)
       }
     })
   }
@@ -143,27 +150,17 @@ function finalSearchFn(word, type, p) {
     secPageMore(word, type, p)
   } else {
     searchFn(word, (r) => {
-      console.log(r)
       const poem = r.poem
       const author = r.author
 
       async function poemFn() {
-        for (let i of poem) {
-          await Poem.findAll({
-            where: {
-              title: i.title
-            }
-          }).then(res => {
-            if (res && res.length < 1) {
-              Poem.sync({
-                force: false
-              }).then(() => {
-                Poem.create(i)
-              })
-            }
-          }).catch(e => {
-            console.log(e)
-          })
+        console.log(poem.length);
+        if(poem.length>0) {
+          for (let i of poem) {
+            await checkTitle(i)
+          }
+        } else {
+          console.log('没有相关文献');
         }
       }
       poemFn()

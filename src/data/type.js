@@ -105,7 +105,7 @@ async function checkTitle(item) {
 function getAllTypes() {
   PoemType.findAll({
     where: {
-      type: "咏物"
+      type: ["写马", "田园"]
     }
   }).then(async r=> {
     let ret = JSON.parse(JSON.stringify(r))
@@ -120,24 +120,9 @@ function getAllTypes() {
             await (async (ii) => {
               let content = JSON.parse(ii.content)
               for (let iii of content) {
-                console.log(iii.link);
                 await getAllShiWen(iii.link, async rr => {
                   for(let iiii of rr) {
-                    // await Poem.findAll({
-                    //   where: {
-                    //     title: iiii.title
-                    //   }
-                    // }).then(rrr => {
-                    //   if (rrr && rrr.length < 1) {
-                    //     Poem.sync({
-                    //       force: false
-                    //     }).then(() => {
-                    //       Poem.create(iii)
-                    //     })
-                    //   }
-                    // })
                     checkTitle(iiii)
-                    console.log(iiii);
                   }
                 })
               }
@@ -150,11 +135,9 @@ function getAllTypes() {
             for(let ii of res.poem) {
               checkTitle(ii)
             }
-            
             t = res.page > 10 ? 10 : res.page
           })
           await wait(500).then(async() => {
-            console.log(t);
             for (let ii = 2; ii <= t; ii++) {
               await (async(i, ii)=> {
                 let u = i.link.replace(/A\d*.aspx/, `A${ii}.aspx`)

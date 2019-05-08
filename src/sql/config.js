@@ -2,12 +2,12 @@ const config = {
   // 启动端口
   port: 3000,
 
-  // 数据库配置
+  // 这里是你数据库的配置
   database: {
     test: {
       DATABASE: 'test',
       USERNAME: 'root',
-      PASSWORD: 'weiying199125',
+      PASSWORD: '123456', // 
       PORT: '3306',
       HOST: 'localhost'
     }
