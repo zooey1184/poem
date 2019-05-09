@@ -4,9 +4,10 @@ const chalk = require('chalk');
 const Router = require('koa-router')
 const router = new Router()
 const bodyparser = require('koa-bodyparser')
-// import { finalSearchFn } from './search'
+import { finalSearchFn } from '../data/search'
 const Sequelize = require('sequelize');
 import { Dynasty, Author, PoemType, Poem } from '../sql'
+import { wait } from '../common/tool';
 const Op = Sequelize.Op
 
 app.use(bodyparser())
@@ -42,9 +43,6 @@ router.post('/getPoem', async (ctx, next) => {
   console.log(query)
   await Poem.findAll({
     where: {
-      // title:{
-      //   [Op.like]: `%${query.title}%`
-      // }
       dynasty: query.dynasty,
       tags: {
         [Op.like]: `%${query.tag}%`,
@@ -52,6 +50,29 @@ router.post('/getPoem', async (ctx, next) => {
     }
   }).then(r => {
     ctx.body = r
+  })
+  await next()
+})
+
+router.post('/search', async(ctx, next)=> {
+  let query = ctx.body
+  await Poem.findAll({
+    where: {
+      content: {
+        [Op.like]: `%${query.word}%`
+      }
+    }
+  }).then(async res=> {
+    let ret = JSON.parse(JSON.stringify(res))
+    if(ret && ret.length>0) {
+      console.log('search from db');
+      ctx.body = ret
+    } else {
+      await finalSearchFn(query.word, sr=> {
+        console.log('search from out');
+        ctx.body = sr
+      })
+    }
   })
   await next()
 })

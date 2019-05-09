@@ -145,11 +145,11 @@ function secPageMore(word, type, p) { // type=title
     })
   }
 }
-function finalSearchFn(word, type, p) {
+async function finalSearchFn(word, callback, type, p) {
   if(type || p) {
-    secPageMore(word, type, p)
+    await secPageMore(word, type, p)
   } else {
-    searchFn(word, (r) => {
+    await searchFn(word, (r) => {
       const poem = r.poem
       const author = r.author
 
@@ -185,13 +185,49 @@ function finalSearchFn(word, type, p) {
         }
       }
       authorFn()
+      callback(r)
     })
   }
+}
+
+async function searchOnce(word, callback) {
+  await searchFn(word, async r=> {
+    const poem = r.poem
+    const author = r.author
+    if (poem.length > 0) {
+      for (let i of poem) {
+        await checkTitle(i)
+      }
+    } else {
+      console.log('没有相关文献');
+    }
+
+    if (author.length > 0) {
+      Author.findAll({
+        where: {
+          name: author[0].name
+        }
+      }).then(res => {
+        if (res && res.length < 1) {
+          Author.sync({
+            force: false
+          }).then(() => {
+            Author.create(author[0])
+          })
+        }
+      }).catch(e => {
+        console.log(e);
+      })
+    }
+
+    await callback(r)
+  })
 }
 
 
 export {
   searchAuthor,
   searchFn,
-  finalSearchFn
+  finalSearchFn,
+  searchOnce
 }
