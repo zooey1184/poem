@@ -1,6 +1,7 @@
 const puppeteer = require('puppeteer');
 import { wait } from '../common/tool'
 import { Dynasty } from '../sql'
+const url = 'https://so.gushiwen.org/authors/Default.aspx'
 /**
  * 获取各个朝代
  * return [{href, type}]
@@ -59,6 +60,7 @@ let getDynastyPages = async (link, callback) => {
 
 function getAllDynasty() {
   getDynasty(url, async (list) => {
+    let ll = []
     for (let i in list) {
       await getDynastyPages(list[i].href, r => {
         ll.push({

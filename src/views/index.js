@@ -6,9 +6,10 @@ const router = new Router()
 const bodyparser = require('koa-bodyparser')
 import { finalSearchFn } from '../data/search'
 const Sequelize = require('sequelize');
-import { Dynasty, Author, PoemType, Poem } from '../sql'
-import { wait } from '../common/tool';
+import { Dynasty, Author, PoemType, Poem, User } from '../sql'
 const Op = Sequelize.Op
+const jwt = require('jsonwebtoken');
+const skey = 'ORRdSRXnUI4XrFlCxEadFjv_X25xk_ks949JCofk'
 
 app.use(bodyparser())
 const PORT = 3000
@@ -81,6 +82,66 @@ router.get('/type', async (ctx, next) => {
   await PoemType.findAll().then(res => {
     ctx.body = {
       ret: res
+    }
+  })
+  await next()
+})
+
+router.post('/register', async(ctx, next)=> {
+  let body = ctx.body
+  await User.findAll({
+    where: {
+      tel: body.tel
+    }
+  }).then(async (r)=> {
+    if(r && r.length>0) {
+      ctx.body = {
+        code: 0,
+        msg: "用户已存在"
+      }
+    }else {
+      User.sync({
+        force: true
+      }).then(()=> {
+        User.create(body)
+        ctx.body = {
+          code: 1,
+          ret: true
+        }
+      })
+    }
+  }).catch(e=> {
+    // ctx.body = 'error'
+  })
+  await next()
+})
+router.post('/login', async (ctx, next) => {
+  let body = ctx.body
+  await User.findAll({
+    where: {
+      tel: body.tel,
+      pwd: body.pwd
+    }
+  }).then((r) => {
+    if (r && r.length > 0) {
+      ctx.body = {
+        code: 0,
+        msg: "用户名或密码不正确"
+      }
+    } else {
+      User.sync({
+        force: false
+      }).then(() => {
+        var token = jwt.sign({
+          name: body.name,
+          pwd: body.pwd
+        }, skey);
+        ctx.body = {
+          code: 1,
+          ret: token
+        }
+        
+      })
     }
   })
   await next()

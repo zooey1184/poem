@@ -80,6 +80,18 @@ const PoemType = db.define('types', {
   // options
 });
 
+const User = db.define('users', {
+  // attributes
+  tel: {
+    type: Sequelize.STRING,
+  },
+  pwd: {
+    type: Sequelize.STRING,
+  }
+}, {
+  // options
+});
+
 db.authenticate()
 .then(() => {
   console.log('数据库连接成功.');
@@ -92,5 +104,6 @@ export {
   Dynasty,
   Author,
   Poem,
-  PoemType
+  PoemType,
+  User
 };
